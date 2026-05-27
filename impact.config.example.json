@@ -1,0 +1,19 @@
+{
+  "remoteMaster": "origin/master",
+  "outputDir": "impact-report",
+  "codegraphDepth": 2,
+  "codegraphLimit": 30,
+  "businessNotes": [
+    "Add project-specific business impact notes here."
+  ],
+  "reviewRules": [
+    "Add project-specific code review rules here."
+  ],
+  "ai": {
+    "enabled": false,
+    "endpoint": "https://api.openai.com/v1/chat/completions",
+    "model": "gpt-4.1-mini",
+    "maxChangedFunctions": 60,
+    "maxImpactFunctions": 80
+  }
+}
