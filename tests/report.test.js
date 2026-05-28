@@ -34,6 +34,8 @@ test("renderMarkdownReport renders impact, tests, and review sections", () => {
   assert.match(markdown, /Cover successful login/);
   assert.match(markdown, /Check Lua nil handling/);
   assert.match(markdown, /diff --git a\/src\/auth\.lua b\/src\/auth\.lua/);
+  assert.match(markdown, /\| High \| auth\.login \| Verify changed function behavior/);
+  assert.match(markdown, /\| Medium \| controller\.signIn \| Verify direct caller workflow/);
 });
 
 test("renderHtmlReport renders standalone html with escaped dynamic content", () => {
@@ -43,6 +45,9 @@ test("renderHtmlReport renders standalone html with escaped dynamic content", ()
   });
 
   assert.match(html, /<!doctype html>/);
+  assert.match(html, /业务功能测试清单/);
+  assert.match(html, /risk-high/);
+  assert.match(html, /risk-medium/);
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
   assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/);
 });
