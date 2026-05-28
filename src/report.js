@@ -2,9 +2,13 @@ export function renderMarkdownReport(report) {
   return [
     `# ${report.title}`,
     "",
-    `- Repository: ${report.repository}`,
+    "## Overview",
+    `- Project: ${report.repository}`,
+    `- Branch: ${report.headRef}`,
     `- Base: ${report.baseRef}`,
-    `- Head: ${report.headRef}`,
+    `- Generated At: ${report.generatedAt ?? ""}`,
+    `- Changed Functions: ${report.changedFunctions.length}`,
+    `- Impact Functions: ${report.impactFunctions.length}`,
     "",
     "## Changed Functions",
     table(["Symbol", "File", "Language"], report.changedFunctions.map((item) => [
@@ -21,14 +25,19 @@ export function renderMarkdownReport(report) {
       item.reason
     ])),
     "",
-    "## Impact Analysis",
+    "## Business Function Impact Analysis",
     report.aiAnalysis.impactSummary,
     "",
-    "## Test Suggestions",
+    "## Business Function Test Checklist",
     bulletList(report.aiAnalysis.testSuggestions),
     "",
     "## Code Review",
     bulletList(report.aiAnalysis.reviewFindings),
+    "",
+    "## Git Diff",
+    "```diff",
+    report.diffText ?? "",
+    "```",
     ""
   ].join("\n");
 }
@@ -73,11 +82,19 @@ export function renderHtmlReport(report) {
       <header>
         <h1>${escapeHtml(report.title)}</h1>
         <div class="meta">
-          <span class="pill">Repository: ${escapeHtml(report.repository)}</span>
+          <span class="pill">Project: ${escapeHtml(report.repository)}</span>
+          <span class="pill">Branch: ${escapeHtml(report.headRef)}</span>
           <span class="pill">Base: ${escapeHtml(report.baseRef)}</span>
-          <span class="pill">Head: ${escapeHtml(report.headRef)}</span>
+          <span class="pill">Generated: ${escapeHtml(report.generatedAt ?? "")}</span>
         </div>
       </header>
+      <section>
+        <h2>Overview</h2>
+        <div class="section">
+          Changed functions: ${escapeHtml(String(report.changedFunctions.length))}<br>
+          Impact functions: ${escapeHtml(String(report.impactFunctions.length))}
+        </div>
+      </section>
       <section>
         <h2>Changed Functions</h2>
         <ul class="changed">${changedItems}</ul>
@@ -90,20 +107,32 @@ export function renderHtmlReport(report) {
         </table>
       </section>
       <section>
-        <h2>Impact Analysis</h2>
+        <h2>Business Function Impact Analysis</h2>
         <div class="section">${escapeHtml(report.aiAnalysis.impactSummary).replace(/\n/g, "<br>")}</div>
       </section>
       <section>
-        <h2>Test Suggestions</h2>
+        <h2>Business Function Test Checklist</h2>
         <div class="section"><ul>${report.aiAnalysis.testSuggestions.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>
       </section>
       <section>
         <h2>Code Review</h2>
         <div class="section"><ul>${report.aiAnalysis.reviewFindings.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>
       </section>
+      <section>
+        <h2>Git Diff</h2>
+        <pre class="section">${escapeHtml(report.diffText ?? "")}</pre>
+      </section>
     </main>
   </body>
 </html>`;
+}
+
+export function buildReportFileNames(project, branch, timestamp = new Date().toISOString()) {
+  const base = `${sanitizeName(project)}_${sanitizeName(branch)}_${formatTimestamp(timestamp)}`;
+  return {
+    markdownFileName: `${base}.md`,
+    htmlFileName: `${base}.html`
+  };
 }
 
 function table(headers, rows) {
@@ -132,4 +161,12 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function sanitizeName(value) {
+  return String(value || "unknown").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "unknown";
+}
+
+function formatTimestamp(timestamp) {
+  return new Date(timestamp).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "").replace("T", "_");
 }

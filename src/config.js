@@ -12,7 +12,7 @@ export function loadImpactConfig(projectPath, explicitConfigPath) {
   const fileConfig = existsSync(configPath) ? JSON.parse(readFileSync(configPath, "utf8")) : {};
   return {
     remoteMaster: "origin/master",
-    outputDir: "impact-report",
+    outputDir: process.env.IMPACT_OUTPUT_DIR ?? "impact-report",
     codegraphDepth: 2,
     codegraphLimit: 30,
     ai: {

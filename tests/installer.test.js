@@ -9,6 +9,16 @@ test("buildServerConfig uses GitHub npx command by default", () => {
   });
 });
 
+test("buildServerConfig can set a default report output directory", () => {
+  assert.deepEqual(buildServerConfig({ outputDir: "D:/impact-reports" }), {
+    command: "npx",
+    args: ["github:zhangzhangzhang1111/impact", "--mcp"],
+    env: {
+      IMPACT_OUTPUT_DIR: "D:/impact-reports"
+    }
+  });
+});
+
 test("mergeJsonMcpConfig preserves existing MCP servers", () => {
   const merged = mergeJsonMcpConfig(
     { mcpServers: { existing: { command: "node", args: ["server.js"] } } },

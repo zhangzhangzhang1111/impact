@@ -32,6 +32,7 @@ Non-interactive examples:
 impact-mcp install --target codex
 impact-mcp install --target claude,gemini
 impact-mcp install --target all
+impact-mcp install --target codex --output-dir D:/impact-reports
 impact-mcp install --print-config codex
 ```
 
@@ -64,8 +65,18 @@ impact-mcp --path D:/your-project --before-commit origin/master --after-commit H
 
 Outputs:
 
-- `impact-report/impact-report.md`
-- `impact-report/impact-report.html`
+- `<outputDir>/<project>_<branch>_<timestamp>.md`
+- `<outputDir>/<project>_<branch>_<timestamp>.html`
+
+When `outputDir` is not specified, reports are generated under
+`<analyzed-project>/impact-report`. The generated report includes:
+
+- Overview
+- Changed functions and two-layer impact functions
+- Business function impact analysis
+- Business function test checklist
+- Code review
+- Git diff
 
 ## AI Analysis
 
@@ -129,6 +140,23 @@ Codex TOML snippet:
 [mcp_servers.impact]
 command = "npx"
 args = ["github:zhangzhangzhang1111/impact", "--mcp"]
+```
+
+If you install with a default report directory:
+
+```bash
+impact-mcp install --target codex --output-dir D:/impact-reports
+```
+
+Codex config includes:
+
+```toml
+[mcp_servers.impact]
+command = "npx"
+args = ["github:zhangzhangzhang1111/impact", "--mcp"]
+
+[mcp_servers.impact.env]
+IMPACT_OUTPUT_DIR = "D:/impact-reports"
 ```
 
 Claude Desktop:

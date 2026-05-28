@@ -38,9 +38,10 @@ export async function runInstallCommand(args, io = {}) {
   const stdout = io.stdout ?? process.stdout;
   const stdin = io.stdin ?? process.stdin;
   const targetId = args.target || args.t;
+  const serverConfig = buildServerConfig({ outputDir: args.outputDir });
   if (args.printConfig) {
     const target = getTarget(args.printConfig);
-    stdout.write(`${formatConfigSnippet(target, buildServerConfig())}\n`);
+    stdout.write(`${formatConfigSnippet(target, serverConfig)}\n`);
     return;
   }
 
@@ -49,16 +50,20 @@ export async function runInstallCommand(args, io = {}) {
     : await promptTargets(stdin, stdout);
 
   for (const target of targets) {
-    installTarget(target, buildServerConfig());
+    installTarget(target, serverConfig);
     stdout.write(`Installed impact MCP server for ${target.name}: ${target.path()}\n`);
   }
 }
 
-export function buildServerConfig() {
-  return {
+export function buildServerConfig(options = {}) {
+  const config = {
     command: "npx",
     args: ["github:zhangzhangzhang1111/impact", "--mcp"]
   };
+  if (options.outputDir) {
+    config.env = { IMPACT_OUTPUT_DIR: options.outputDir };
+  }
+  return config;
 }
 
 export function getTarget(id) {
@@ -84,9 +89,16 @@ export function upsertCodexToml(existing, serverConfig) {
     "[mcp_servers.impact]",
     `command = ${tomlString(serverConfig.command)}`,
     `args = [${serverConfig.args.map(tomlString).join(", ")}]`,
+    ...(serverConfig.env ? [
+      "",
+      "[mcp_servers.impact.env]",
+      ...Object.entries(serverConfig.env).map(([key, value]) => `${key} = ${tomlString(value)}`)
+    ] : []),
     ""
   ].join("\n");
-  const withoutOldBlock = existing.replace(/\n?\[mcp_servers\.impact\]\n(?:[^\[]|\[(?!mcp_servers\.impact\]))*?(?=\n\[|$)/gs, "\n");
+  const withoutOldBlock = existing
+    .replace(/\n?\[mcp_servers\.impact\.env\]\n(?:[^\[]|\[(?!mcp_servers\.impact(?:\.env)?\]))*?(?=\n\[|$)/gs, "\n")
+    .replace(/\n?\[mcp_servers\.impact\]\n(?:[^\[]|\[(?!mcp_servers\.impact(?:\.env)?\]))*?(?=\n\[|$)/gs, "\n");
   return `${withoutOldBlock.trimEnd()}\n\n${block}`.trimStart();
 }
 

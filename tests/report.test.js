@@ -6,7 +6,9 @@ const sample = {
   title: "Impact Analysis",
   repository: "demo",
   baseRef: "origin/master",
-  headRef: "HEAD",
+  headRef: "feature/login",
+  generatedAt: "2026-05-28T02:30:00.000Z",
+  diffText: "diff --git a/src/auth.lua b/src/auth.lua\n+function auth.login() end",
   changedFunctions: [{ filePath: "src/auth.lua", symbol: "auth.login", language: "lua" }],
   impactFunctions: [
     { symbol: "auth.login", filePath: "src/auth.lua", language: "lua", depth: 0, reason: "changed" },
@@ -23,9 +25,15 @@ test("renderMarkdownReport renders impact, tests, and review sections", () => {
   const markdown = renderMarkdownReport(sample);
 
   assert.match(markdown, /# Impact Analysis/);
+  assert.match(markdown, /## Overview/);
+  assert.match(markdown, /## Business Function Impact Analysis/);
+  assert.match(markdown, /## Business Function Test Checklist/);
+  assert.match(markdown, /## Code Review/);
+  assert.match(markdown, /## Git Diff/);
   assert.match(markdown, /auth\.login/);
   assert.match(markdown, /Cover successful login/);
   assert.match(markdown, /Check Lua nil handling/);
+  assert.match(markdown, /diff --git a\/src\/auth\.lua b\/src\/auth\.lua/);
 });
 
 test("renderHtmlReport renders standalone html with escaped dynamic content", () => {
@@ -37,4 +45,13 @@ test("renderHtmlReport renders standalone html with escaped dynamic content", ()
   assert.match(html, /<!doctype html>/);
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
   assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/);
+});
+
+test("buildReportFileNames uses project, branch, and timestamp naming", async () => {
+  const { buildReportFileNames } = await import("../src/report.js");
+
+  assert.deepEqual(buildReportFileNames("demo/app", "feature/login", "2026-05-28T02:30:40.123Z"), {
+    markdownFileName: "demo_app_feature_login_20260528_023040.md",
+    htmlFileName: "demo_app_feature_login_20260528_023040.html"
+  });
 });

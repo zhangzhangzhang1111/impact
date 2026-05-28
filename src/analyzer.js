@@ -6,7 +6,7 @@ import { loadImpactConfig } from "./config.js";
 import { parseChangedFunctionsFromDiff } from "./diff-parser.js";
 import { getDiffText, getRepositoryName } from "./git.js";
 import { collectImpactFunctions } from "./impact-graph.js";
-import { renderHtmlReport, renderMarkdownReport } from "./report.js";
+import { buildReportFileNames, renderHtmlReport, renderMarkdownReport } from "./report.js";
 
 export async function runImpactAnalysis(params) {
   const projectPath = resolveRequiredPath(params.path);
@@ -30,6 +30,7 @@ export async function runImpactAnalysis(params) {
   });
   const impactFunctions = collectImpactFunctions(changedFunctions, callerMap, config.codegraphDepth);
   const repository = await getRepositoryName(projectPath);
+  const generatedAt = new Date().toISOString();
   const aiAnalysis = await analyzeWithAi({
     repository,
     baseRef,
@@ -43,14 +44,17 @@ export async function runImpactAnalysis(params) {
     repository,
     baseRef,
     headRef,
+    generatedAt,
+    diffText,
     changedFunctions,
     impactFunctions,
     aiAnalysis
   };
   const outputDir = resolve(projectPath, params.outputDir ?? config.outputDir);
   await mkdir(outputDir, { recursive: true });
-  const markdownPath = join(outputDir, "impact-report.md");
-  const htmlPath = join(outputDir, "impact-report.html");
+  const { markdownFileName, htmlFileName } = buildReportFileNames(repository, headRef, generatedAt);
+  const markdownPath = join(outputDir, markdownFileName);
+  const htmlPath = join(outputDir, htmlFileName);
   await writeFile(markdownPath, renderMarkdownReport(report), "utf8");
   await writeFile(htmlPath, renderHtmlReport(report), "utf8");
 
