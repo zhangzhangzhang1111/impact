@@ -35,14 +35,38 @@ export async function getCallers(projectPath, symbol, limit) {
   }
 }
 
-function parseCodeGraphJson(stdout) {
-  const parsed = JSON.parse(stdout || "[]");
+export function parseCodeGraphJson(stdout) {
+  const parsed = JSON.parse(extractJson(stdout));
   const items = Array.isArray(parsed) ? parsed : parsed.callers ?? parsed.results ?? [];
   return items.map((item) => ({
     symbol: item.symbol ?? item.name ?? item.caller ?? item.id,
     filePath: item.filePath ?? item.file ?? item.path,
     language: item.language
   })).filter((item) => item.symbol);
+}
+
+function extractJson(stdout) {
+  const clean = stripAnsi(stdout || "").trim();
+  if (!clean) {
+    return "[]";
+  }
+  for (let index = 0; index < clean.length; index += 1) {
+    if (clean[index] !== "[" && clean[index] !== "{") {
+      continue;
+    }
+    const candidate = clean.slice(index);
+    try {
+      JSON.parse(candidate);
+      return candidate;
+    } catch {
+      // Keep scanning: CodeGraph may print log lines like "[i]" before JSON.
+    }
+  }
+  return "[]";
+}
+
+function stripAnsi(value) {
+  return value.replace(/\u001b\[[0-9;]*m/g, "");
 }
 
 async function fallbackCallers(projectPath, symbol, originalError) {
