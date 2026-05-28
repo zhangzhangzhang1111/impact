@@ -1,6 +1,6 @@
 ---
 name: code-impact-review
-description: Use when the user asks for AI impact analysis, impact review, code review by changed functions, caller-chain analysis, risk-based test plans, or reports from git diff. Supports project path, branch, optional before/after commits, CodeGraph two-layer callers, AI synthesis, Markdown/HTML/JSON/prompt artifacts, and Codex/Claude/Gemini/Cursor MCP usage.
+description: Use when the user asks for AI impact analysis, impact review, code review by changed functions, caller-chain analysis, risk-based test plans, or reports from git diff. Supports project path, branch, optional before/after commits, LuaLS MCP for Lua callers, CodeGraph fallback/other-language callers, AI synthesis, Markdown/HTML/JSON/prompt artifacts, and Codex/Claude/Gemini/Cursor MCP usage.
 ---
 
 # Code Impact Review
@@ -46,7 +46,8 @@ When `beforeCommit` and `afterCommit` are omitted, compare `origin/master` to `b
    - 功能测试
    - 代码评审
    - Git Diff（按文件默认折叠）
-5. If CodeGraph cannot resolve a symbol, keep the fallback caller hints but mention the reduced confidence.
+5. For Lua changes, prefer the LuaLS MCP server (`luals_request` with `textDocument/references`) for caller/reference impact. If LuaLS MCP is unavailable, keep CodeGraph or fallback caller hints and mention the reduced confidence.
+6. For non-Lua changes, use CodeGraph two-layer callers and fallback hints when CodeGraph cannot resolve a symbol.
 
 ## Review Focus
 
@@ -80,4 +81,4 @@ When responding to the user, include:
 - report file paths returned by MCP/CLI
 - the highest-risk changed or impacted functions
 - test areas that should be run first
-- any CodeGraph or AI configuration limitations
+- any LuaLS MCP, CodeGraph, or AI configuration limitations

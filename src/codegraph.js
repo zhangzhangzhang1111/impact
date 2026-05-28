@@ -1,4 +1,5 @@
 import { runCommand } from "./process.js";
+import { getLuaMcpCallers } from "./luals-mcp.js";
 
 export async function initializeCodeGraph(projectPath) {
   await runCommand("codegraph", ["init", "-i", projectPath], { cwd: projectPath });
@@ -7,6 +8,7 @@ export async function initializeCodeGraph(projectPath) {
 export async function getTwoLayerCallerMap(projectPath, changedFunctions, options = {}) {
   const limit = String(options.limit ?? 30);
   const callerMap = new Map();
+  const symbolMeta = new Map(changedFunctions.map((item) => [item.symbol, item]));
   const queue = changedFunctions.map((item) => ({ symbol: item.symbol, depth: 0 }));
   const visited = new Set();
 
@@ -16,9 +18,16 @@ export async function getTwoLayerCallerMap(projectPath, changedFunctions, option
       continue;
     }
     visited.add(current.symbol);
-    const callers = await getCallers(projectPath, current.symbol, limit);
+    const meta = symbolMeta.get(current.symbol);
+    const callers = await getCallers(projectPath, current.symbol, {
+      limit,
+      language: meta?.language,
+      luaMcp: options.luaMcp,
+      changedFunctions
+    });
     callerMap.set(current.symbol, callers);
     for (const caller of callers) {
+      symbolMeta.set(caller.symbol, caller);
       queue.push({ symbol: caller.symbol, depth: current.depth + 1 });
     }
   }
@@ -26,7 +35,21 @@ export async function getTwoLayerCallerMap(projectPath, changedFunctions, option
   return callerMap;
 }
 
-export async function getCallers(projectPath, symbol, limit) {
+export async function getCallers(projectPath, symbol, options = {}) {
+  const limit = options.limit ?? "30";
+  if (options.language === "lua" && options.luaMcp?.enabled) {
+    try {
+      return await getLuaMcpCallers(projectPath, symbol, {
+        ...options.luaMcp,
+        changedFunctions: options.changedFunctions
+      });
+    } catch (error) {
+      if (options.luaMcp.strict) {
+        throw error;
+      }
+    }
+  }
+
   try {
     const { stdout } = await runCommand("codegraph", ["callers", symbol, "-p", projectPath, "-l", limit, "-j"], { cwd: projectPath });
     return parseCodeGraphJson(stdout);

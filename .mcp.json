@@ -6,6 +6,13 @@
         "github:zhangzhangzhang1111/impact",
         "--mcp"
       ]
+    },
+    "luals": {
+      "command": "npx",
+      "args": [
+        "github:zhangzhangzhang1111/lua-language-server",
+        "luals-mcp"
+      ]
     }
   }
 }

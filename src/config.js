@@ -16,6 +16,13 @@ export function loadImpactConfig(projectPath, explicitConfigPath) {
     codegraphDepth: 2,
     codegraphLimit: 30,
     sourceContextRadius: 8,
+    luaLanguageServer: {
+      enabled: process.env.IMPACT_LUALS_MCP_ENABLED !== "0",
+      command: process.env.IMPACT_LUALS_MCP_COMMAND ?? "npx",
+      args: (process.env.IMPACT_LUALS_MCP_ARGS ?? "github:zhangzhangzhang1111/lua-language-server luals-mcp").split(/\s+/).filter(Boolean),
+      timeoutMs: Number(process.env.IMPACT_LUALS_MCP_TIMEOUT_MS ?? 15000),
+      strict: process.env.IMPACT_LUALS_MCP_STRICT === "1"
+    },
     ai: {
       enabled: Boolean(process.env.IMPACT_AI_API_KEY),
       endpoint: process.env.IMPACT_AI_ENDPOINT ?? "https://api.openai.com/v1/chat/completions",
@@ -37,6 +44,14 @@ export function loadImpactConfig(projectPath, explicitConfigPath) {
       maxChangedFunctions: 60,
       maxSourceContexts: 80,
       ...(fileConfig.ai ?? {})
+    },
+    luaLanguageServer: {
+      enabled: process.env.IMPACT_LUALS_MCP_ENABLED !== "0",
+      command: process.env.IMPACT_LUALS_MCP_COMMAND ?? "npx",
+      args: (process.env.IMPACT_LUALS_MCP_ARGS ?? "github:zhangzhangzhang1111/lua-language-server luals-mcp").split(/\s+/).filter(Boolean),
+      timeoutMs: Number(process.env.IMPACT_LUALS_MCP_TIMEOUT_MS ?? 15000),
+      strict: process.env.IMPACT_LUALS_MCP_STRICT === "1",
+      ...(fileConfig.luaLanguageServer ?? {})
     },
     businessNotes: fileConfig.businessNotes ?? [],
     reviewRules: [...DEFAULT_REVIEW_RULES, ...(fileConfig.reviewRules ?? [])]

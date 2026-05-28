@@ -112,10 +112,14 @@ export async function runInstallSkillCommand(args, io = {}) {
 export function buildServerConfig(options = {}) {
   const config = {
     command: "npx",
-    args: ["github:zhangzhangzhang1111/impact", "--mcp"]
+    args: ["github:zhangzhangzhang1111/impact", "--mcp"],
+    env: {
+      IMPACT_LUALS_MCP_COMMAND: "npx",
+      IMPACT_LUALS_MCP_ARGS: "github:zhangzhangzhang1111/lua-language-server luals-mcp"
+    }
   };
   if (options.outputDir) {
-    config.env = { IMPACT_OUTPUT_DIR: options.outputDir };
+    config.env.IMPACT_OUTPUT_DIR = options.outputDir;
   }
   return config;
 }
@@ -176,6 +180,12 @@ export function buildSkillInstallInstruction(target, options = {}) {
     "",
     "```bash",
     mcpCommand,
+    "```",
+    "",
+    "Lua caller-chain provider:",
+    "",
+    "```bash",
+    "npx github:zhangzhangzhang1111/lua-language-server luals-mcp",
     "```",
     "",
     "Primary MCP tool:",

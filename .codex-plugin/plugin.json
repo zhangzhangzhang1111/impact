@@ -1,7 +1,7 @@
 {
   "name": "code-impact-review",
   "version": "0.1.0",
-  "description": "AI code impact analysis skill and MCP server using git diff, CodeGraph, AI review, and report artifacts.",
+  "description": "AI code impact analysis skill and MCP server using git diff, LuaLS MCP for Lua, CodeGraph fallback, AI review, and report artifacts.",
   "author": {
     "name": "zhangzhangzhang1111",
     "url": "https://github.com/zhangzhangzhang1111"
@@ -21,7 +21,7 @@
   "interface": {
     "displayName": "Code Impact Review",
     "shortDescription": "Analyze code changes, callers, risk, tests, and review reports.",
-    "longDescription": "Runs git diff based impact analysis, resolves two-layer CodeGraph callers, optionally asks an OpenAI-compatible model for risk and review synthesis, and emits Markdown, HTML, JSON, and prompt artifacts for AI-assisted code review.",
+    "longDescription": "Runs git diff based impact analysis, resolves Lua caller/reference impact through LuaLS MCP, uses CodeGraph for fallback and other languages, optionally asks an OpenAI-compatible model for risk and review synthesis, and emits Markdown, HTML, JSON, and prompt artifacts for AI-assisted code review.",
     "developerName": "zhangzhangzhang1111",
     "category": "Developer Tools",
     "capabilities": [

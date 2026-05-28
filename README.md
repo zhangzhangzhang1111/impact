@@ -1,11 +1,11 @@
 ﻿# impact
 
-`impact` is a zero-runtime-dependency Node.js MCP service for code impact analysis. It reads git diffs, extracts changed function symbols, uses CodeGraph for two-layer caller analysis, sends bounded diff/source/caller context to an OpenAI-compatible model when configured, and generates Markdown, standalone HTML, JSON, and AI prompt artifacts.
+`impact` is a zero-runtime-dependency Node.js MCP service for code impact analysis. It reads git diffs, extracts changed function symbols, uses the LuaLS MCP server for Lua caller/reference analysis, uses CodeGraph for other languages and fallback caller analysis, sends bounded diff/source/caller context to an OpenAI-compatible model when configured, and generates Markdown, standalone HTML, JSON, and AI prompt artifacts.
 
 The repository is also packaged as a Codex plugin/skill:
 
 - `.codex-plugin/plugin.json` exposes the plugin metadata.
-- `.mcp.json` exposes the `impact` MCP server.
+- `.mcp.json` exposes the `impact` MCP server and the `luals` MCP server.
 - `skills/code-impact-review/SKILL.md` provides the AI-facing skill workflow.
 
 ## Install
@@ -27,7 +27,7 @@ The package name is `@impact-analyzer/mcp`, but it has not been published to the
 public npm registry yet. After publishing, the registry command will be:
 `npm install -g @impact-analyzer/mcp`.
 
-Node.js 20 or newer is required. The target machine also needs `git`, `codegraph`, and `rg` for fallback text search when CodeGraph cannot resolve a language/symbol.
+Node.js 20 or newer is required. The target machine also needs `git`, `codegraph`, and `rg` for fallback text search when CodeGraph cannot resolve a language/symbol. Lua impact analysis uses `npx github:zhangzhangzhang1111/lua-language-server luals-mcp` by default.
 
 `npm install` only installs the executable. Run `impact-mcp install` after that
 to choose which AI tool should receive the MCP configuration.
@@ -131,6 +131,13 @@ Create `impact.config.json` in the target project, or pass `--config`.
   "codegraphDepth": 2,
   "codegraphLimit": 30,
   "sourceContextRadius": 8,
+  "luaLanguageServer": {
+    "enabled": true,
+    "command": "npx",
+    "args": ["github:zhangzhangzhang1111/lua-language-server", "luals-mcp"],
+    "timeoutMs": 15000,
+    "strict": false
+  },
   "businessNotes": [
     "Payment changes must include rollback and reconciliation checks."
   ],
@@ -149,6 +156,8 @@ Create `impact.config.json` in the target project, or pass `--config`.
 
 Default review rules include Lua and C/C++ checks for nil handling, ownership, lifetime, bounds, concurrency, ABI compatibility, and cross-language boundaries.
 
+`luaLanguageServer` controls the Lua-specific caller provider. When enabled, Lua changed functions are resolved through the LuaLS MCP bridge using `textDocument/references`. If LuaLS MCP fails and `strict` is `false`, the analyzer falls back to CodeGraph and then `rg`.
+
 ## MCP Client Examples
 
 Codex:
@@ -159,6 +168,10 @@ Codex:
     "impact": {
       "command": "npx",
       "args": ["github:zhangzhangzhang1111/impact", "--mcp"]
+    },
+    "luals": {
+      "command": "npx",
+      "args": ["github:zhangzhangzhang1111/lua-language-server", "luals-mcp"]
     }
   }
 }
@@ -206,4 +219,4 @@ Gemini CLI or other MCP clients can use the same command/args pair.
 
 ## Language Support
 
-Function extraction supports common hunk header formats for Lua, C, C++, JS/TS, Go, Rust, Java, Kotlin, Python, Ruby, PHP, and C#. CodeGraph handles the precise structural call graph for languages it supports. Unsupported or unresolved symbols degrade to `rg`-based text search for a conservative caller hint.
+Function extraction supports common hunk header formats for Lua, C, C++, JS/TS, Go, Rust, Java, Kotlin, Python, Ruby, PHP, and C#. Lua caller/reference impact uses the `zhangzhangzhang1111/lua-language-server` MCP bridge first. CodeGraph handles other languages and acts as Lua fallback. Unsupported or unresolved symbols degrade to `rg`-based text search for a conservative caller hint.

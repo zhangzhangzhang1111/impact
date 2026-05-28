@@ -27,7 +27,8 @@ export async function runImpactAnalysis(params) {
 
   await initializeCodeGraph(projectPath);
   const callerMap = await getTwoLayerCallerMap(projectPath, changedFunctions, {
-    limit: config.codegraphLimit
+    limit: config.codegraphLimit,
+    luaMcp: config.luaLanguageServer
   });
   const impactFunctions = collectImpactFunctions(changedFunctions, callerMap, config.codegraphDepth);
   const sourceContexts = await collectFunctionContexts(projectPath, impactFunctions, {

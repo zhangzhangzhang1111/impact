@@ -17,7 +17,11 @@ import {
 test("buildServerConfig uses GitHub npx command by default", () => {
   assert.deepEqual(buildServerConfig(), {
     command: "npx",
-    args: ["github:zhangzhangzhang1111/impact", "--mcp"]
+    args: ["github:zhangzhangzhang1111/impact", "--mcp"],
+    env: {
+      IMPACT_LUALS_MCP_COMMAND: "npx",
+      IMPACT_LUALS_MCP_ARGS: "github:zhangzhangzhang1111/lua-language-server luals-mcp"
+    }
   });
 });
 
@@ -26,6 +30,8 @@ test("buildServerConfig can set a default report output directory", () => {
     command: "npx",
     args: ["github:zhangzhangzhang1111/impact", "--mcp"],
     env: {
+      IMPACT_LUALS_MCP_COMMAND: "npx",
+      IMPACT_LUALS_MCP_ARGS: "github:zhangzhangzhang1111/lua-language-server luals-mcp",
       IMPACT_OUTPUT_DIR: "D:/impact-reports"
     }
   });
@@ -64,6 +70,7 @@ test("buildSkillInstallInstruction mentions skill path and MCP tool", () => {
 
   assert.match(instruction, /\/tmp\/code-impact-review\/SKILL\.md/);
   assert.match(instruction, /npx github:zhangzhangzhang1111\/impact --mcp/);
+  assert.match(instruction, /npx github:zhangzhangzhang1111\/lua-language-server luals-mcp/);
   assert.match(instruction, /analyze_code_impact/);
 });
 
