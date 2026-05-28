@@ -14,7 +14,7 @@ Or install globally from GitHub:
 
 ```bash
 npm install -g github:zhangzhangzhang1111/impact
-impact-mcp --mcp
+impact-mcp install
 ```
 
 The package name is `@impact-analyzer/mcp`, but it has not been published to the
@@ -22,6 +22,18 @@ public npm registry yet. After publishing, the registry command will be:
 `npm install -g @impact-analyzer/mcp`.
 
 Node.js 20 or newer is required. The target machine also needs `git`, `codegraph`, and `rg` for fallback text search when CodeGraph cannot resolve a language/symbol.
+
+`npm install` only installs the executable. Run `impact-mcp install` after that
+to choose which AI tool should receive the MCP configuration.
+
+Non-interactive examples:
+
+```bash
+impact-mcp install --target codex
+impact-mcp install --target claude,gemini
+impact-mcp install --target all
+impact-mcp install --print-config codex
+```
 
 ## MCP Tool
 
@@ -109,6 +121,14 @@ Codex:
     }
   }
 }
+```
+
+Codex TOML snippet:
+
+```toml
+[mcp_servers.impact]
+command = "npx"
+args = ["github:zhangzhangzhang1111/impact", "--mcp"]
 ```
 
 Claude Desktop:
