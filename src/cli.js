@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { runImpactAnalysis } from "./analyzer.js";
-import { runInstallCommand } from "./installer.js";
+import { runInstallCommand, runInstallSkillCommand } from "./installer.js";
 import { startMcpServer } from "./server.js";
 
 const args = parseArgs(process.argv.slice(2));
@@ -11,6 +11,11 @@ if (args.help || args.h) {
   console.log("0.1.0");
 } else if (args._[0] === "install") {
   runInstallCommand(args).catch((error) => {
+    console.error(error.stack || error.message);
+    process.exitCode = 1;
+  });
+} else if (args._[0] === "install-skill") {
+  runInstallSkillCommand(args).catch((error) => {
     console.error(error.stack || error.message);
     process.exitCode = 1;
   });
@@ -44,11 +49,14 @@ function printHelp() {
 
 Commands:
   install                    Configure impact MCP for an AI tool
+  install-skill              Install skill instructions for an AI tool
   mcp                        Start as an MCP stdio server
 
 Options:
   --mcp                       Start as an MCP stdio server
   --target, -t <ids>          Install target(s): codex, claude, gemini, cursor, all
+  --print-instructions <id>   Print skill install instructions for target(s)
+  --skill-dir <path>          Optional skill source directory for install-skill
   --print-config <id>         Print MCP config snippet and exit
   --path <path>               Target project path
   --branch <ref>              Optional head branch/ref
@@ -64,6 +72,17 @@ function parseArgs(argv) {
   const parsed = { _: [] };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
+    if (arg.startsWith("-") && !arg.startsWith("--")) {
+      const key = shortFlagName(arg.slice(1));
+      const next = argv[index + 1];
+      if (!next || next.startsWith("-")) {
+        parsed[key] = true;
+      } else {
+        parsed[key] = next;
+        index += 1;
+      }
+      continue;
+    }
     if (!arg.startsWith("--")) {
       parsed._.push(arg);
       continue;
@@ -78,4 +97,12 @@ function parseArgs(argv) {
     }
   }
   return parsed;
+}
+
+function shortFlagName(value) {
+  return {
+    h: "help",
+    v: "version",
+    t: "target"
+  }[value] ?? value;
 }

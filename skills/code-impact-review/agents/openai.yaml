@@ -1,0 +1,14 @@
+interface:
+  display_name: "Code Impact Review"
+  short_description: "Impact analysis, risk tests, and code review"
+  brand_color: "#2563EB"
+  default_prompt: "Use $code-impact-review to analyze this branch against origin/master."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "impact"
+      description: "Impact MCP server for git diff, CodeGraph caller analysis, AI review, and reports"
+
+policy:
+  allow_implicit_invocation: true

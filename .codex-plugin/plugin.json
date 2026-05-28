@@ -1,0 +1,39 @@
+{
+  "name": "code-impact-review",
+  "version": "0.1.0",
+  "description": "AI code impact analysis skill and MCP server using git diff, CodeGraph, AI review, and report artifacts.",
+  "author": {
+    "name": "zhangzhangzhang1111",
+    "url": "https://github.com/zhangzhangzhang1111"
+  },
+  "homepage": "https://github.com/zhangzhangzhang1111/impact",
+  "repository": "https://github.com/zhangzhangzhang1111/impact",
+  "license": "MIT",
+  "keywords": [
+    "impact-analysis",
+    "code-review",
+    "codegraph",
+    "mcp",
+    "skill"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Code Impact Review",
+    "shortDescription": "Analyze code changes, callers, risk, tests, and review reports.",
+    "longDescription": "Runs git diff based impact analysis, resolves two-layer CodeGraph callers, optionally asks an OpenAI-compatible model for risk and review synthesis, and emits Markdown, HTML, JSON, and prompt artifacts for AI-assisted code review.",
+    "developerName": "zhangzhangzhang1111",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Write",
+      "MCP"
+    ],
+    "websiteURL": "https://github.com/zhangzhangzhang1111/impact",
+    "defaultPrompt": [
+      "Analyze impact for this branch against origin/master.",
+      "Review changed Lua and C++ functions with caller risk.",
+      "Generate impact report, tests, and code review findings."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

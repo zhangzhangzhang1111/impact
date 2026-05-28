@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "impact": {
+      "command": "npx",
+      "args": [
+        "github:zhangzhangzhang1111/impact",
+        "--mcp"
+      ]
+    }
+  }
+}

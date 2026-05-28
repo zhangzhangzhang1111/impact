@@ -2,6 +2,12 @@
 
 `impact` is a zero-runtime-dependency Node.js MCP service for code impact analysis. It reads git diffs, extracts changed function symbols, uses CodeGraph for two-layer caller analysis, sends bounded diff/source/caller context to an OpenAI-compatible model when configured, and generates Markdown, standalone HTML, JSON, and AI prompt artifacts.
 
+The repository is also packaged as a Codex plugin/skill:
+
+- `.codex-plugin/plugin.json` exposes the plugin metadata.
+- `.mcp.json` exposes the `impact` MCP server.
+- `skills/code-impact-review/SKILL.md` provides the AI-facing skill workflow.
+
 ## Install
 
 Run directly from GitHub with npx:
@@ -35,6 +41,24 @@ impact-mcp install --target all
 impact-mcp install --target codex --output-dir D:/impact-reports
 impact-mcp install --print-config codex
 ```
+
+Install the skill instructions as well:
+
+```bash
+impact-mcp install-skill --target codex
+impact-mcp install-skill --target claude,gemini
+impact-mcp install-skill --target all
+impact-mcp install-skill --print-instructions codex
+```
+
+Skill install targets:
+
+- `codex`: copies `skills/code-impact-review` to `~/.codex/skills/code-impact-review`
+- `claude`: copies `skills/code-impact-review` to `~/.claude/skills/code-impact-review`
+- `gemini`: writes a managed `code-impact-review` instruction block to `~/.gemini/GEMINI.md`
+- `cursor`: writes a Cursor rule to `~/.cursor/rules/code-impact-review.mdc`
+
+For Codex plugin installation from a local checkout, point Codex at this repository root as a plugin source; the plugin manifest is in `.codex-plugin/plugin.json`.
 
 ## MCP Tool
 

@@ -7,6 +7,9 @@
     "impact-mcp": "./src/cli.js"
   },
   "files": [
+    ".codex-plugin",
+    ".mcp.json",
+    "skills",
     "src",
     "README.md",
     "impact.config.example.json"

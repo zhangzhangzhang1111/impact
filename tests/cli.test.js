@@ -19,6 +19,25 @@ test("cli prints install config snippets", async () => {
   assert.equal(result.stderr, "");
 });
 
+test("cli prints skill install instructions without prompting", async () => {
+  const result = await runNode(["src/cli.js", "install-skill", "--print-instructions", "codex"]);
+
+  assert.equal(result.code, 0);
+  assert.match(result.stdout, /code-impact-review for Codex/);
+  assert.match(result.stdout, /analyze_code_impact/);
+  assert.doesNotMatch(result.stdout, /Selection:/);
+  assert.equal(result.stderr, "");
+});
+
+test("cli supports short target flag for install-skill", async () => {
+  const result = await runNode(["src/cli.js", "install-skill", "-t", "codex", "--print-instructions"]);
+
+  assert.equal(result.code, 0);
+  assert.match(result.stdout, /code-impact-review for Codex/);
+  assert.doesNotMatch(result.stdout, /code-impact-review for Claude/);
+  assert.equal(result.stderr, "");
+});
+
 function runNode(args) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, args, { cwd: process.cwd() });
