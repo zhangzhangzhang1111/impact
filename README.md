@@ -69,14 +69,14 @@ Outputs:
 - `<outputDir>/<project>_<branch>_<timestamp>.html`
 
 When `outputDir` is not specified, reports are generated under
-`<analyzed-project>/impact-report`. The generated report includes:
+`<analyzed-project>/impact-report`. The generated report is Chinese and includes:
 
-- Overview
-- Changed functions and two-layer impact functions
-- Business function impact analysis
-- Business function test checklist
-- Code review
-- Git diff
+- 总览
+- 变更函数和两层调用影响函数
+- 业务功能影响面分析
+- 业务功能测试清单，覆盖所有影响函数并标注高/中/低风险等级
+- 代码评审
+- Git Diff，HTML 报告中按每个文件一个标签页展示，Markdown 报告中按每个文件一个小节展示
 
 ## AI Analysis
 
