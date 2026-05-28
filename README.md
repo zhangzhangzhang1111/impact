@@ -4,18 +4,22 @@
 
 ## Install
 
-Run directly with npx:
+Run directly from GitHub with npx:
 
 ```bash
-npx @impact-analyzer/mcp --mcp
+npx github:zhangzhangzhang1111/impact --mcp
 ```
 
-Or install globally:
+Or install globally from GitHub:
 
 ```bash
-npm install -g @impact-analyzer/mcp
+npm install -g github:zhangzhangzhang1111/impact
 impact-mcp --mcp
 ```
+
+The package name is `@impact-analyzer/mcp`, but it has not been published to the
+public npm registry yet. After publishing, the registry command will be:
+`npm install -g @impact-analyzer/mcp`.
 
 Node.js 20 or newer is required. The target machine also needs `git`, `codegraph`, and `rg` for fallback text search when CodeGraph cannot resolve a language/symbol.
 
@@ -101,7 +105,7 @@ Codex:
   "mcpServers": {
     "impact": {
       "command": "npx",
-      "args": ["@impact-analyzer/mcp", "--mcp"]
+      "args": ["github:zhangzhangzhang1111/impact", "--mcp"]
     }
   }
 }
@@ -114,7 +118,7 @@ Claude Desktop:
   "mcpServers": {
     "impact": {
       "command": "npx",
-      "args": ["@impact-analyzer/mcp", "--mcp"]
+      "args": ["github:zhangzhangzhang1111/impact", "--mcp"]
     }
   }
 }

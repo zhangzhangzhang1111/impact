@@ -4,7 +4,11 @@ import { startMcpServer } from "./server.js";
 
 const args = parseArgs(process.argv.slice(2));
 
-if (args.mcp || args._[0] === "mcp") {
+if (args.help || args.h) {
+  printHelp();
+} else if (args.version || args.v) {
+  console.log("0.1.0");
+} else if (args.mcp || args._[0] === "mcp") {
   startMcpServer();
 } else {
   runImpactAnalysis({
@@ -25,6 +29,21 @@ if (args.mcp || args._[0] === "mcp") {
     console.error(error.stack || error.message);
     process.exitCode = 1;
   });
+}
+
+function printHelp() {
+  console.log(`Usage: impact-mcp [options] [path]
+
+Options:
+  --mcp                       Start as an MCP stdio server
+  --path <path>               Target project path
+  --branch <ref>              Optional head branch/ref
+  --before-commit <ref>       Optional base commit/ref, defaults to origin/master
+  --after-commit <ref>        Optional head commit/ref, defaults to branch or HEAD
+  --output-dir <dir>          Optional report output directory
+  --config <path>             Optional impact config JSON path
+  --version, -v               Print version
+  --help, -h                  Print help`);
 }
 
 function parseArgs(argv) {
