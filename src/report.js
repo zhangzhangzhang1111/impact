@@ -1,5 +1,6 @@
 export function renderMarkdownReport(report) {
   const testChecklist = buildTestChecklist(report.impactFunctions);
+  const riskAssessments = normalizeRiskAssessments(report);
   const diffFiles = splitDiffByFile(report.diffText ?? "");
   return [
     "# 代码影响面分析报告",
@@ -30,6 +31,14 @@ export function renderMarkdownReport(report) {
     "## 业务功能影响面分析",
     report.aiAnalysis.impactSummary,
     "",
+    "## 影响面分析结果（风险等级划分）",
+    table(["风险", "函数", "原因", "证据"], riskAssessments.map((item) => [
+      item.risk,
+      item.symbol,
+      item.reason,
+      item.evidence
+    ])),
+    "",
     "## 业务功能测试清单",
     table(["风险", "函数", "测试建议", "原因"], testChecklist.map((item) => [
       item.risk,
@@ -47,10 +56,13 @@ export function renderMarkdownReport(report) {
     "## Git Diff（按文件）",
     ...diffFiles.flatMap((file) => [
       "",
-      `### ${file.filePath}`,
+      `<details><summary>${escapeMarkdownText(file.filePath)}</summary>`,
+      "",
       "```diff",
       file.diffText,
-      "```"
+      "```",
+      "",
+      "</details>"
     ]),
     ""
   ].join("\n");
@@ -58,6 +70,7 @@ export function renderMarkdownReport(report) {
 
 export function renderHtmlReport(report) {
   const testChecklist = buildTestChecklist(report.impactFunctions);
+  const riskAssessments = normalizeRiskAssessments(report);
   const diffFiles = splitDiffByFile(report.diffText ?? "");
   const impactRows = report.impactFunctions.map((item) => `
           <tr>
@@ -75,14 +88,18 @@ export function renderHtmlReport(report) {
             <td>${escapeHtml(item.suggestion)}</td>
             <td>${escapeHtml(item.reason)}</td>
           </tr>`).join("");
-  const diffTabs = diffFiles.map((file, index) => `
-          <button type="button" role="tab" aria-selected="${index === 0 ? "true" : "false"}" aria-controls="diff-file-${index}" id="diff-tab-${index}" data-diff-tab="diff-file-${index}">
-            ${escapeHtml(file.filePath)}
-          </button>`).join("");
-  const diffPanels = diffFiles.map((file, index) => `
-          <section role="tabpanel" id="diff-file-${index}" aria-labelledby="diff-tab-${index}" ${index === 0 ? "" : "hidden"}>
-            <pre class="section" tabindex="0"><code>${escapeHtml(file.diffText)}</code></pre>
-          </section>`).join("");
+  const riskRows = riskAssessments.map((item) => `
+          <tr>
+            <td><span class="risk-badge risk-${escapeHtml(riskClass(item.risk))}">${escapeHtml(item.risk)}</span></td>
+            <td>${escapeHtml(item.symbol)}</td>
+            <td>${escapeHtml(item.reason)}</td>
+            <td>${escapeHtml(item.evidence)}</td>
+          </tr>`).join("");
+  const diffDetails = diffFiles.map((file) => `
+          <details class="diff-file">
+            <summary>${escapeHtml(file.filePath)}</summary>
+            <pre tabindex="0"><code>${escapeHtml(file.diffText)}</code></pre>
+          </details>`).join("");
 
   return `<!doctype html>
 <html lang="zh-CN">
@@ -114,9 +131,9 @@ export function renderHtmlReport(report) {
       .risk-high { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
       .risk-medium { background: rgba(245,158,11,.15); color: var(--orange); border: 1px solid rgba(245,158,11,.3); }
       .risk-low { background: rgba(59,130,246,.15); color: var(--blue); border: 1px solid rgba(59,130,246,.3); }
-      .diff-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-      .diff-tabs button { background: var(--panel2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; cursor: pointer; max-width: 100%; overflow-wrap: anywhere; }
-      .diff-tabs button[aria-selected="true"] { border-color: var(--blue); color: #93c5fd; }
+      .diff-file { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; margin: 10px 0; }
+      .diff-file summary { cursor: pointer; padding: 12px 14px; color: #93c5fd; overflow-wrap: anywhere; }
+      .diff-file pre { margin: 0; border-top: 1px solid var(--border); padding: 14px; }
       pre { overflow: auto; scrollbar-gutter: stable; }
       li { margin: 7px 0; }
     </style>
@@ -158,6 +175,13 @@ export function renderHtmlReport(report) {
         <div class="section">${escapeHtml(report.aiAnalysis.impactSummary).replace(/\n/g, "<br>")}</div>
       </section>
       <section>
+        <h2>影响面分析结果（风险等级划分）</h2>
+        <table>
+          <thead><tr><th>风险</th><th>函数</th><th>原因</th><th>证据</th></tr></thead>
+          <tbody>${riskRows}</tbody>
+        </table>
+      </section>
+      <section>
         <h2>业务功能测试清单</h2>
         <table>
           <thead><tr><th>风险</th><th>函数</th><th>测试建议</th><th>原因</th></tr></thead>
@@ -172,22 +196,68 @@ export function renderHtmlReport(report) {
       <section>
         <h2>Git Diff（按文件）</h2>
         <div class="section">
-          <div class="diff-tabs" role="tablist" aria-label="Git Diff 文件列表">${diffTabs}</div>
-          ${diffPanels}
+          ${diffDetails}
         </div>
       </section>
     </main>
-    <script>
-      document.querySelectorAll("[data-diff-tab]").forEach((button) => {
-        button.addEventListener("click", () => {
-          const target = button.dataset.diffTab;
-          document.querySelectorAll("[data-diff-tab]").forEach((tab) => tab.setAttribute("aria-selected", String(tab === button)));
-          document.querySelectorAll("[role='tabpanel']").forEach((panel) => { panel.hidden = panel.id !== target; });
-        });
-      });
-    </script>
   </body>
 </html>`;
+}
+
+export function renderJsonArtifact(report) {
+  return `${JSON.stringify({
+    meta: {
+      title: report.title,
+      repository: report.repository,
+      baseRef: report.baseRef,
+      headRef: report.headRef,
+      generatedAt: report.generatedAt
+    },
+    changes: {
+      changedFunctions: report.changedFunctions,
+      functionDiffs: report.functionDiffs ?? [],
+      diffByFile: splitDiffByFile(report.diffText ?? "")
+    },
+    callGraph: {
+      depth: 2,
+      impactFunctions: report.impactFunctions,
+      sourceContexts: report.sourceContexts ?? []
+    },
+    review: {
+      impactSummary: report.aiAnalysis.impactSummary,
+      riskAssessments: normalizeRiskAssessments(report),
+      testSuggestions: report.aiAnalysis.testSuggestions ?? [],
+      reviewFindings: report.aiAnalysis.reviewFindings ?? []
+    }
+  }, null, 2)}\n`;
+}
+
+export function renderAiPrompt(report, config = {}) {
+  return [
+    "# AI 影响面分析 Prompt",
+    "",
+    "请基于以下结构化上下文继续深化影响面分析、业务功能测试报告和代码评审。",
+    "",
+    "## 仓库与范围",
+    `- 项目: ${report.repository}`,
+    `- 基线: ${report.baseRef}`,
+    `- 目标: ${report.headRef}`,
+    `- 生成时间: ${report.generatedAt ?? ""}`,
+    "",
+    "## 输出要求",
+    "- 输出中文 Markdown。",
+    "- 必须包含总览、影响面分析结果（风险等级划分）、功能测试、代码评审、Git Diff 复核建议。",
+    "- 代码评审优先覆盖 C/C++ 与 Lua：空值/nil、资源所有权、生命周期、越界、并发、ABI/API 兼容、错误传播、跨语言边界。",
+    "",
+    "## 项目补充规则",
+    bulletList(config.reviewRules ?? []),
+    "",
+    "## 上下文 JSON",
+    "```json",
+    renderJsonArtifact(report).trimEnd(),
+    "```",
+    ""
+  ].join("\n");
 }
 
 export function buildTestChecklist(impactFunctions) {
@@ -204,6 +274,35 @@ export function buildTestChecklist(impactFunctions) {
       suggestion,
       reason: item.reason
     };
+  });
+}
+
+export function normalizeRiskAssessments(report) {
+  const aiRisks = Array.isArray(report.aiAnalysis?.riskAssessments)
+    ? report.aiAnalysis.riskAssessments
+    : [];
+  const bySymbol = new Map();
+  for (const item of aiRisks) {
+    if (!item?.symbol) {
+      continue;
+    }
+    bySymbol.set(item.symbol, {
+      risk: normalizeRisk(item.risk),
+      symbol: item.symbol,
+      reason: item.reason ?? "AI 综合影响面判断。",
+      evidence: item.evidence ?? ""
+    });
+  }
+
+  return report.impactFunctions.map((item) => bySymbol.get(item.symbol) ?? {
+    risk: item.depth === 0 ? "高" : item.depth === 1 ? "中" : "低",
+    symbol: item.symbol,
+    reason: item.depth === 0
+      ? "变更函数本身需要最高优先级验证。"
+      : item.depth === 1
+        ? "直接调用方可能继承接口、数据或异常语义变化。"
+        : "二层调用方存在间接业务回归风险。",
+    evidence: item.reason
   });
 }
 
@@ -232,7 +331,9 @@ export function buildReportFileNames(project, branch, timestamp = new Date().toI
   const base = `${sanitizeName(project)}_${sanitizeName(branch)}_${formatTimestamp(timestamp)}`;
   return {
     markdownFileName: `${base}.md`,
-    htmlFileName: `${base}.html`
+    htmlFileName: `${base}.html`,
+    jsonFileName: `${base}.json`,
+    promptFileName: `${base}.prompt.md`
   };
 }
 
@@ -253,6 +354,20 @@ function bulletList(items) {
 
 function escapeMarkdownCell(value) {
   return String(value).replace(/\|/g, "\\|").replace(/\n/g, "<br>");
+}
+
+function escapeMarkdownText(value) {
+  return String(value).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function normalizeRisk(value) {
+  if (value === "高" || value === "high" || value === "HIGH") {
+    return "高";
+  }
+  if (value === "中" || value === "medium" || value === "MEDIUM") {
+    return "中";
+  }
+  return "低";
 }
 
 function escapeHtml(value) {

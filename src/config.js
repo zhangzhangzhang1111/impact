@@ -15,13 +15,15 @@ export function loadImpactConfig(projectPath, explicitConfigPath) {
     outputDir: process.env.IMPACT_OUTPUT_DIR ?? "impact-report",
     codegraphDepth: 2,
     codegraphLimit: 30,
+    sourceContextRadius: 8,
     ai: {
       enabled: Boolean(process.env.IMPACT_AI_API_KEY),
       endpoint: process.env.IMPACT_AI_ENDPOINT ?? "https://api.openai.com/v1/chat/completions",
       apiKey: process.env.IMPACT_AI_API_KEY,
       model: process.env.IMPACT_AI_MODEL ?? "gpt-4.1-mini",
       maxImpactFunctions: 80,
-      maxChangedFunctions: 60
+      maxChangedFunctions: 60,
+      maxSourceContexts: 80
     },
     businessNotes: [],
     reviewRules: DEFAULT_REVIEW_RULES,
@@ -33,6 +35,7 @@ export function loadImpactConfig(projectPath, explicitConfigPath) {
       model: process.env.IMPACT_AI_MODEL ?? "gpt-4.1-mini",
       maxImpactFunctions: 80,
       maxChangedFunctions: 60,
+      maxSourceContexts: 80,
       ...(fileConfig.ai ?? {})
     },
     businessNotes: fileConfig.businessNotes ?? [],

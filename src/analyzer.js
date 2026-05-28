@@ -6,7 +6,8 @@ import { loadImpactConfig } from "./config.js";
 import { parseChangedFunctionsFromDiff } from "./diff-parser.js";
 import { getDiffText, getRepositoryName } from "./git.js";
 import { collectImpactFunctions } from "./impact-graph.js";
-import { buildReportFileNames, renderHtmlReport, renderMarkdownReport } from "./report.js";
+import { buildReportFileNames, renderAiPrompt, renderHtmlReport, renderJsonArtifact, renderMarkdownReport } from "./report.js";
+import { buildFunctionDiffContexts, collectFunctionContexts } from "./source-context.js";
 
 export async function runImpactAnalysis(params) {
   const projectPath = resolveRequiredPath(params.path);
@@ -29,6 +30,10 @@ export async function runImpactAnalysis(params) {
     limit: config.codegraphLimit
   });
   const impactFunctions = collectImpactFunctions(changedFunctions, callerMap, config.codegraphDepth);
+  const sourceContexts = await collectFunctionContexts(projectPath, impactFunctions, {
+    radius: config.sourceContextRadius
+  });
+  const functionDiffs = buildFunctionDiffContexts(diffText, changedFunctions);
   const repository = await getRepositoryName(projectPath);
   const generatedAt = new Date().toISOString();
   const aiAnalysis = await analyzeWithAi({
@@ -36,7 +41,9 @@ export async function runImpactAnalysis(params) {
     baseRef,
     headRef,
     changedFunctions,
-    impactFunctions
+    impactFunctions,
+    functionDiffs,
+    sourceContexts
   }, config);
 
   const report = {
@@ -48,19 +55,25 @@ export async function runImpactAnalysis(params) {
     diffText,
     changedFunctions,
     impactFunctions,
+    functionDiffs,
+    sourceContexts,
     aiAnalysis
   };
   const outputDir = resolve(projectPath, params.outputDir ?? config.outputDir);
   await mkdir(outputDir, { recursive: true });
-  const { markdownFileName, htmlFileName } = buildReportFileNames(repository, headRef, generatedAt);
+  const { markdownFileName, htmlFileName, jsonFileName, promptFileName } = buildReportFileNames(repository, headRef, generatedAt);
   const markdownPath = join(outputDir, markdownFileName);
   const htmlPath = join(outputDir, htmlFileName);
+  const jsonPath = join(outputDir, jsonFileName);
+  const promptPath = join(outputDir, promptFileName);
   await writeFile(markdownPath, renderMarkdownReport(report), "utf8");
   await writeFile(htmlPath, renderHtmlReport(report), "utf8");
+  await writeFile(jsonPath, renderJsonArtifact(report), "utf8");
+  await writeFile(promptPath, renderAiPrompt(report, config), "utf8");
 
   return {
     ...report,
-    output: { markdownPath, htmlPath }
+    output: { markdownPath, htmlPath, jsonPath, promptPath }
   };
 }
 

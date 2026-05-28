@@ -28,6 +28,8 @@ if (args.help || args.h) {
     console.log(JSON.stringify({
       markdownPath: result.output.markdownPath,
       htmlPath: result.output.htmlPath,
+      jsonPath: result.output.jsonPath,
+      promptPath: result.output.promptPath,
       changedFunctionCount: result.changedFunctions.length,
       impactFunctionCount: result.impactFunctions.length
     }, null, 2));

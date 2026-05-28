@@ -38,14 +38,17 @@ function trimForContext(input, aiConfig) {
   return {
     ...input,
     changedFunctions: input.changedFunctions.slice(0, aiConfig.maxChangedFunctions ?? 60),
-    impactFunctions: input.impactFunctions.slice(0, aiConfig.maxImpactFunctions ?? 80)
+    impactFunctions: input.impactFunctions.slice(0, aiConfig.maxImpactFunctions ?? 80),
+    sourceContexts: (input.sourceContexts ?? []).slice(0, aiConfig.maxSourceContexts ?? 80),
+    functionDiffs: (input.functionDiffs ?? []).slice(0, aiConfig.maxChangedFunctions ?? 60)
   };
 }
 
 function buildSystemPrompt(config) {
   return [
-    "You are a senior code impact analyst. Return strict JSON with keys impactSummary, testSuggestions, reviewFindings.",
-    "Focus on changed functions and two-layer callers. Be concise and actionable.",
+    "You are a senior code impact analyst. Return strict JSON with keys impactSummary, riskAssessments, testSuggestions, reviewFindings.",
+    "riskAssessments must be an array of {risk, symbol, reason, evidence}; risk must be one of 高, 中, 低.",
+    "Use changed function diffs, source snippets, and two-layer callers. Be concise and actionable.",
     "Business notes:",
     ...config.businessNotes.map((item) => `- ${item}`),
     "Review rules:",
@@ -56,12 +59,24 @@ function buildSystemPrompt(config) {
 function localAnalysis(input, config) {
   const changed = input.changedFunctions.map((item) => item.symbol).join(", ") || "none";
   const impacted = input.impactFunctions.filter((item) => item.depth > 0).map((item) => item.symbol).slice(0, 10);
+  const riskAssessments = input.impactFunctions.map((item) => ({
+    risk: item.depth === 0 ? "高" : item.depth === 1 ? "中" : "低",
+    symbol: item.symbol,
+    reason: item.depth === 0
+      ? "变更函数本身需要最高优先级验证。"
+      : item.depth === 1
+        ? "直接调用方可能继承接口、数据或异常语义变化。"
+        : "二层调用方存在间接业务回归风险。",
+    evidence: item.reason
+  }));
   return {
     impactSummary: [
       `Changed functions: ${changed}.`,
       impacted.length ? `Potential callers affected within two layers: ${impacted.join(", ")}.` : "No caller impact was found within two layers.",
+      input.sourceContexts?.length ? `Source snippets collected: ${input.sourceContexts.length}.` : "No source snippets were collected.",
       config.businessNotes.length ? `Project notes: ${config.businessNotes.join(" ")}` : "AI is not configured; this is a deterministic local summary."
     ].join("\n"),
+    riskAssessments,
     testSuggestions: [
       "Run unit tests covering each changed function and its direct callers.",
       "Run integration tests for flows represented by second-layer callers.",

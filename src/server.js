@@ -60,6 +60,8 @@ async function routeMessage(message) {
           summary: analysis.aiAnalysis.impactSummary,
           markdownPath: analysis.output.markdownPath,
           htmlPath: analysis.output.htmlPath,
+          jsonPath: analysis.output.jsonPath,
+          promptPath: analysis.output.promptPath,
           changedFunctionCount: analysis.changedFunctions.length,
           impactFunctionCount: analysis.impactFunctions.length
         }, null, 2)

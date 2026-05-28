@@ -1,6 +1,6 @@
 ﻿# impact
 
-`impact` is a zero-runtime-dependency Node.js MCP service for code impact analysis. It reads git diffs, extracts changed function symbols, uses CodeGraph for two-layer caller analysis, optionally sends the bounded impact context to an OpenAI-compatible model, and generates Markdown plus standalone HTML reports.
+`impact` is a zero-runtime-dependency Node.js MCP service for code impact analysis. It reads git diffs, extracts changed function symbols, uses CodeGraph for two-layer caller analysis, sends bounded diff/source/caller context to an OpenAI-compatible model when configured, and generates Markdown, standalone HTML, JSON, and AI prompt artifacts.
 
 ## Install
 
@@ -67,16 +67,20 @@ Outputs:
 
 - `<outputDir>/<project>_<branch>_<timestamp>.md`
 - `<outputDir>/<project>_<branch>_<timestamp>.html`
+- `<outputDir>/<project>_<branch>_<timestamp>.json`
+- `<outputDir>/<project>_<branch>_<timestamp>.prompt.md`
 
 When `outputDir` is not specified, reports are generated under
 `<analyzed-project>/impact-report`. The generated report is Chinese and includes:
 
 - 总览
 - 变更函数和两层调用影响函数
-- 业务功能影响面分析
+- 业务功能影响面分析和风险等级划分
 - 业务功能测试清单，覆盖所有影响函数并标注高/中/低风险等级
 - 代码评审
-- Git Diff，HTML 报告中按每个文件一个标签页展示，Markdown 报告中按每个文件一个小节展示
+- Git Diff，Markdown 和 HTML 都按文件默认折叠展示
+
+The JSON artifact contains structured metadata, changed functions, per-function diff snippets, CodeGraph impact functions, collected source snippets, risk assessment, test suggestions, and review findings. The prompt artifact is designed for Codex, Claude, Gemini, or another AI reviewer to continue deeper analysis from the same evidence.
 
 ## AI Analysis
 
@@ -102,6 +106,7 @@ Create `impact.config.json` in the target project, or pass `--config`.
   "outputDir": "impact-report",
   "codegraphDepth": 2,
   "codegraphLimit": 30,
+  "sourceContextRadius": 8,
   "businessNotes": [
     "Payment changes must include rollback and reconciliation checks."
   ],
@@ -112,7 +117,8 @@ Create `impact.config.json` in the target project, or pass `--config`.
     "enabled": true,
     "model": "gpt-4.1-mini",
     "maxChangedFunctions": 60,
-    "maxImpactFunctions": 80
+    "maxImpactFunctions": 80,
+    "maxSourceContexts": 80
   }
 }
 ```
