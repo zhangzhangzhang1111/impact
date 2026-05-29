@@ -60,9 +60,22 @@ export async function runImpactAnalysis(params) {
     sourceContexts,
     aiAnalysis
   };
-  const outputDir = resolve(projectPath, params.outputDir ?? config.outputDir);
+  const output = await writeReportArtifacts(projectPath, params.outputDir ?? config.outputDir, report, config);
+
+  return {
+    ...report,
+    output
+  };
+}
+
+export async function writeReportArtifacts(projectPath, outputDirValue, report, config = {}) {
+  const outputDir = resolve(projectPath, outputDirValue);
   await mkdir(outputDir, { recursive: true });
-  const { markdownFileName, htmlFileName, jsonFileName, promptFileName } = buildReportFileNames(repository, headRef, generatedAt);
+  const { markdownFileName, htmlFileName, jsonFileName, promptFileName } = buildReportFileNames(
+    report.repository,
+    report.headRef,
+    report.generatedAt
+  );
   const markdownPath = join(outputDir, markdownFileName);
   const htmlPath = join(outputDir, htmlFileName);
   const jsonPath = join(outputDir, jsonFileName);
@@ -72,10 +85,7 @@ export async function runImpactAnalysis(params) {
   await writeFile(jsonPath, renderJsonArtifact(report), "utf8");
   await writeFile(promptPath, renderAiPrompt(report, config), "utf8");
 
-  return {
-    ...report,
-    output: { markdownPath, htmlPath, jsonPath, promptPath }
-  };
+  return { markdownPath, htmlPath, jsonPath, promptPath };
 }
 
 function resolveRequiredPath(pathValue) {

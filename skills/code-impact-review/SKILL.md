@@ -7,6 +7,8 @@ description: Use when the user asks for AI impact analysis, impact review, code 
 
 Use this skill to analyze how a code change affects business behavior and caller chains, then generate review-ready artifacts.
 
+All user-facing reports must be written in Chinese. Do not only summarize the analysis in chat: every analysis run must create local report artifacts and return their file paths to the user.
+
 ## Quick Start
 
 Prefer the bundled MCP tool when available:
@@ -40,6 +42,7 @@ When `beforeCommit` and `afterCommit` are omitted, compare `origin/master` to `b
    - `.html`: standalone visual report
    - `.json`: structured AI/human evidence
    - `.prompt.md`: continuation prompt for Codex, Claude, Gemini, or another AI reviewer
+   If the MCP tool is unavailable, run the CLI instead so the artifacts are still written locally.
 4. Review the output sections:
    - 总览
    - 影响面分析结果（风险等级划分）
@@ -82,3 +85,5 @@ When responding to the user, include:
 - the highest-risk changed or impacted functions
 - test areas that should be run first
 - any LuaLS MCP, CodeGraph, or AI configuration limitations
+
+Never replace the local report files with a chat-only analysis. The final answer should explicitly mention the Markdown, HTML, JSON, and prompt artifact paths.

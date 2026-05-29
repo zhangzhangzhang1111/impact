@@ -21,16 +21,16 @@ const sample = {
     { symbol: "controller.signIn", depth: 1, reason: "caller of auth.login" }
   ],
   aiAnalysis: {
-    impactSummary: "Login behavior may affect sign-in routing.",
+    impactSummary: "登录行为可能影响登录路由。",
     riskAssessments: [
-      { risk: "高", symbol: "auth.login", reason: "Auth behavior changed", evidence: "changed" }
+      { risk: "高", symbol: "auth.login", reason: "认证行为发生变化", evidence: "changed" }
     ],
-    testSuggestions: ["Cover successful login", "Cover failed permission check"],
-    reviewFindings: ["Check Lua nil handling", "Check C/C++ ownership boundaries"]
+    testSuggestions: ["覆盖登录成功场景", "覆盖权限校验失败场景"],
+    reviewFindings: ["检查 Lua nil 处理", "检查 C/C++ 所有权边界"]
   }
 };
 
-test("renderMarkdownReport renders Chinese impact, tests, review, and per-file diff sections", () => {
+test("renderMarkdownReport renders real Chinese impact, tests, review, and per-file diff sections", () => {
   const markdown = renderMarkdownReport(sample);
 
   assert.match(markdown, /# 代码影响面分析报告/);
@@ -41,16 +41,17 @@ test("renderMarkdownReport renders Chinese impact, tests, review, and per-file d
   assert.match(markdown, /## 代码评审/);
   assert.match(markdown, /## Git Diff（按文件）/);
   assert.match(markdown, /auth\.login/);
-  assert.match(markdown, /Cover successful login/);
-  assert.match(markdown, /Check Lua nil handling/);
+  assert.match(markdown, /覆盖登录成功场景/);
+  assert.match(markdown, /检查 Lua nil 处理/);
   assert.match(markdown, /diff --git a\/src\/auth\.lua b\/src\/auth\.lua/);
   assert.match(markdown, /\| 高 \| auth\.login \| 验证变更函数行为/);
   assert.match(markdown, /\| 中 \| controller\.signIn \| 验证直接调用方业务流程/);
   assert.match(markdown, /<details><summary>src\/auth\.lua<\/summary>/);
   assert.match(markdown, /<details><summary>src\/user\.lua<\/summary>/);
+  assert.doesNotMatch(markdown, /浠|鎬|褰|楂/);
 });
 
-test("renderHtmlReport renders Chinese standalone html with escaped dynamic content and collapsed per-file diff", () => {
+test("renderHtmlReport renders real Chinese standalone html with escaped dynamic content and collapsed per-file diff", () => {
   const html = renderHtmlReport({
     ...sample,
     aiAnalysis: { ...sample.aiAnalysis, impactSummary: "<script>alert(1)</script>" }
@@ -69,6 +70,7 @@ test("renderHtmlReport renders Chinese standalone html with escaped dynamic cont
   assert.match(html, /risk-medium/);
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
   assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/);
+  assert.doesNotMatch(html, /浠|鎬|褰|楂/);
 });
 
 test("splitDiffByFile returns one diff block per file", async () => {
@@ -91,7 +93,7 @@ test("buildReportFileNames uses project, branch, and timestamp naming", async ()
   });
 });
 
-test("renderJsonArtifact and renderAiPrompt expose AI-ready context", () => {
+test("renderJsonArtifact and renderAiPrompt expose Chinese AI-ready context", () => {
   const json = JSON.parse(renderJsonArtifact({
     ...sample,
     functionDiffs: [{ symbol: "auth.login", diffSnippet: "+audit(user)" }],
@@ -103,5 +105,6 @@ test("renderJsonArtifact and renderAiPrompt expose AI-ready context", () => {
   assert.equal(json.review.riskAssessments[0].symbol, "auth.login");
   assert.equal(json.changes.functionDiffs[0].symbol, "auth.login");
   assert.match(prompt, /AI 影响面分析 Prompt/);
+  assert.match(prompt, /输出中文 Markdown/);
   assert.match(prompt, /Lua: check nil handling/);
 });

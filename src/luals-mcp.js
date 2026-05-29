@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 export async function getLuaMcpCallers(projectPath, symbol, options = {}) {
   const command = options.command;
@@ -217,10 +217,10 @@ function uriToRelativePath(uri, projectPath) {
   if (!uri?.startsWith("file://")) {
     return "";
   }
-  const absolute = decodeURIComponent(new URL(uri).pathname);
   const normalizedProject = resolve(projectPath);
-  const normalizedFile = resolve(absolute);
-  return normalizedFile.startsWith(normalizedProject)
-    ? normalizedFile.slice(normalizedProject.length + 1)
-    : normalizedFile;
+  const normalizedFile = resolve(fileURLToPath(uri));
+  const relativePath = relative(normalizedProject, normalizedFile);
+  const insideProject = relativePath && !relativePath.startsWith("..") && !isAbsolute(relativePath);
+  const result = insideProject ? relativePath : normalizedFile;
+  return sep === "\\" ? result.replace(/\\/g, "/") : result;
 }

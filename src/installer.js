@@ -1,5 +1,5 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { homedir, platform } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -167,7 +167,7 @@ export function installSkillTarget(target, options = {}) {
 
 export function buildSkillInstallInstruction(target, options = {}) {
   const skillDir = options.skillDir ?? join(PACKAGE_ROOT, "skills", SKILL_NAME);
-  const skillPath = join(skillDir, "SKILL.md");
+  const skillPath = toDisplayPath(join(skillDir, "SKILL.md"));
   const mcpCommand = "npx github:zhangzhangzhang1111/impact --mcp";
   return [
     `# ${SKILL_NAME} for ${target.name}`,
@@ -342,4 +342,8 @@ function tomlString(value) {
 
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function toDisplayPath(value) {
+  return sep === "\\" ? value.replace(/\\/g, "/") : value;
 }

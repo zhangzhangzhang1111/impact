@@ -34,7 +34,7 @@ export async function analyzeWithAi(input, config) {
   return JSON.parse(content);
 }
 
-function trimForContext(input, aiConfig) {
+function trimForContext(input, aiConfig = {}) {
   return {
     ...input,
     changedFunctions: input.changedFunctions.slice(0, aiConfig.maxChangedFunctions ?? 60),
@@ -46,9 +46,10 @@ function trimForContext(input, aiConfig) {
 
 function buildSystemPrompt(config) {
   return [
-    "You are a senior code impact analyst. Return strict JSON with keys impactSummary, riskAssessments, testSuggestions, reviewFindings.",
-    "riskAssessments must be an array of {risk, symbol, reason, evidence}; risk must be one of 高, 中, 低.",
-    "Use changed function diffs, source snippets, and two-layer callers. Be concise and actionable.",
+    "你是资深代码影响面分析专家。必须返回严格 JSON，包含 impactSummary, riskAssessments, testSuggestions, reviewFindings。",
+    "所有自然语言内容必须使用中文。",
+    "riskAssessments 必须是 {risk, symbol, reason, evidence} 数组；risk 只能是 高、中、低。",
+    "结合变更函数 diff、源码片段和两层调用方。结论要简洁、可执行。",
     "Business notes:",
     ...config.businessNotes.map((item) => `- ${item}`),
     "Review rules:",
@@ -57,7 +58,7 @@ function buildSystemPrompt(config) {
 }
 
 function localAnalysis(input, config) {
-  const changed = input.changedFunctions.map((item) => item.symbol).join(", ") || "none";
+  const changed = input.changedFunctions.map((item) => item.symbol).join(", ") || "无";
   const impacted = input.impactFunctions.filter((item) => item.depth > 0).map((item) => item.symbol).slice(0, 10);
   const riskAssessments = input.impactFunctions.map((item) => ({
     risk: item.depth === 0 ? "高" : item.depth === 1 ? "中" : "低",
@@ -71,16 +72,16 @@ function localAnalysis(input, config) {
   }));
   return {
     impactSummary: [
-      `Changed functions: ${changed}.`,
-      impacted.length ? `Potential callers affected within two layers: ${impacted.join(", ")}.` : "No caller impact was found within two layers.",
-      input.sourceContexts?.length ? `Source snippets collected: ${input.sourceContexts.length}.` : "No source snippets were collected.",
-      config.businessNotes.length ? `Project notes: ${config.businessNotes.join(" ")}` : "AI is not configured; this is a deterministic local summary."
+      `变更函数: ${changed}。`,
+      impacted.length ? `两层调用链内可能受影响的调用方: ${impacted.join(", ")}。` : "两层调用链内未发现调用方影响。",
+      input.sourceContexts?.length ? `已收集源码片段: ${input.sourceContexts.length} 个。` : "未收集到源码片段。",
+      config.businessNotes.length ? `项目补充说明: ${config.businessNotes.join(" ")}` : "未配置 AI，当前为本地确定性中文摘要。"
     ].join("\n"),
     riskAssessments,
     testSuggestions: [
-      "Run unit tests covering each changed function and its direct callers.",
-      "Run integration tests for flows represented by second-layer callers.",
-      "Add regression cases around boundary inputs, error paths, and rollback behavior."
+      "运行覆盖每个变更函数及其直接调用方的单元测试。",
+      "运行二层调用方代表业务流程的集成测试。",
+      "补充边界输入、异常路径和回滚行为的回归用例。"
     ],
     reviewFindings: config.reviewRules.slice(0, 8)
   };
